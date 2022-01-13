@@ -164,7 +164,7 @@ def update_content(pathname):
 navbar = dbc.NavbarSimple(
     children=[
         dbc.NavItem(dbc.NavLink("Home", active=True, href='/')),
-        dbc.NavItem(dbc.NavLink("Predictions", href="/show_predictions")),
+        #dbc.NavItem(dbc.NavLink("Predictions", href="/show_predictions")),
         dbc.NavItem(dbc.NavLink("Visualizations", href="/show_factors")),
         #dbc.NavItem(dbc.NavLink("Retrain", href="/retrain")),
 
