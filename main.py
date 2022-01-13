@@ -55,7 +55,8 @@ right_card = html.Div(
             dbc.Button("Active", color="success"),
             html.Br(),
             html.Br(),
-            dbc.Button("Detail Predictions", color="warning" , href="/show_predictions"),
+
+            #dbc.Button("Detail Predictions", color="warning" , href="/show_predictions"),
         ]
 )
 
