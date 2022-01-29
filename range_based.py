@@ -10,6 +10,9 @@ import pandas as pd
 from datetime import datetime as dt
 import re
 from app_init import app
+import plotly.graph_objects as go
+import pandas as pd
+from detailed import wind_speed_count
 
 colors = {
     'background': '#111111',
@@ -61,6 +64,7 @@ df['date'] = pd.to_datetime(df['date'])
 #graph 1
 def create_total_figure(df):
     fig = go.Figure()
+
     fig.add_trace(go.Scatter(
         x=df['Date/Time'],
         y=df['Theoretical_Power_Curve (KWh)'],
@@ -189,6 +193,7 @@ def create_wind_speed_daily(df):
     return fig
 
 
+
 ###########################  RANGE BASED ############################
 switch = html.Div(
     [
@@ -254,7 +259,8 @@ layout = html.Div(children=[
         # Graph 1
         html.Br(),
         html.Div(id='output_visualization_total'),
-        html.Div(id='output_total_windspeed')
+        html.Div(id='output_total_windspeed'),
+        html.Div(id='output_table')
     ]),
 ])
 
@@ -276,9 +282,40 @@ def update_total_graph(start_date, end_date):
      dash.dependencies.Input('selection_based_on_dates', 'end_date')])
 def update_total_windspeed_graph(start_date, end_date):
     data = filter_data_based_on_dates(start_date, end_date, df)
-    fig = create_wind_speed_total(data)
+    fig_wind = create_wind_speed_total(data)
+
     return dcc.Graph(
         id='total_windspeed_graph',
+        figure=fig_wind
+    )
+
+@app.callback(
+    dash.dependencies.Output('output_table', 'children'),
+    [dash.dependencies.Input('selection_based_on_dates', 'start_date'),
+     dash.dependencies.Input('selection_based_on_dates', 'end_date')])
+def table_windspeed(start_date, end_date):
+    data = filter_data_based_on_dates(start_date, end_date, df)
+    df_table = wind_speed_count(data)
+    Index = np.arange(1,40)
+    #,"Wind Speed (m/s)","Active Power","Theoratical Power Cureve (kWh)","Loss Value","Loss(%)","Count"
+    #df_table.Power, df_table.Energy, df_table.Loss_value, df_table.Loss, df_table.count
+    print(df_table)
+    fig = go.Figure(data=[go.Table(
+        header=dict(values=list(["Wind Speed (m/s)","Active Power","Theoratical Power Cureve (kWh)","Loss Value","Loss(%)","Count"]),
+                    fill_color='paleturquoise',
+                    align='center'),
+        cells=dict(values=([df_table.Speed,df_table.Power,df_table.Energy,df_table.Loss_value,df_table.Loss,df_table.Count]),
+                   fill_color='lavender',
+                   align='center'))
+    ])
+    fig.update_layout(
+        title='Wind Speed Count Data',
+        # paper_bgcolor='#AFEEEE',
+    )
+    return dcc.Graph(
+        id='table_output',
         figure=fig
     )
+
+
 
