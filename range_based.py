@@ -296,7 +296,6 @@ def update_total_windspeed_graph(start_date, end_date):
 def table_windspeed(start_date, end_date):
     data = filter_data_based_on_dates(start_date, end_date, df)
     df_table = wind_speed_count(data)
-    Index = np.arange(1,40)
     #,"Wind Speed (m/s)","Active Power","Theoratical Power Cureve (kWh)","Loss Value","Loss(%)","Count"
     #df_table.Power, df_table.Energy, df_table.Loss_value, df_table.Loss, df_table.count
     print(df_table)

@@ -157,6 +157,6 @@ def wind_speed_count(df):
     print(data_T_speed)
     return data_T_speed
 
-url = "C:/Users/Lenovo/Desktop/Windmill Power Forecast/03 Building Models - TimeSeries/T1.csv"
-df = pd.read_csv(url)
-wind_speed_count(df)
+#url = "C:/Users/Lenovo/Desktop/Windmill Power Forecast/03 Building Models - TimeSeries/T1.csv"
+#df = pd.read_csv(url)
+#wind_speed_count(df)
