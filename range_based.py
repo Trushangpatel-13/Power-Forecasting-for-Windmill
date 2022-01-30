@@ -12,7 +12,7 @@ import re
 from app_init import app
 import plotly.graph_objects as go
 import pandas as pd
-from detailed import wind_speed_count
+from detailed import wind_speed_count, wind_direction_count
 
 colors = {
     'background': '#111111',
@@ -260,7 +260,8 @@ layout = html.Div(children=[
         html.Br(),
         html.Div(id='output_visualization_total'),
         html.Div(id='output_total_windspeed'),
-        html.Div(id='output_table')
+        html.Div(id='output_table'),
+        html.Div(id='wind_direction_plot')
     ]),
 ])
 
@@ -296,9 +297,10 @@ def update_total_windspeed_graph(start_date, end_date):
 def table_windspeed(start_date, end_date):
     data = filter_data_based_on_dates(start_date, end_date, df)
     df_table = wind_speed_count(data)
+
     #,"Wind Speed (m/s)","Active Power","Theoratical Power Cureve (kWh)","Loss Value","Loss(%)","Count"
     #df_table.Power, df_table.Energy, df_table.Loss_value, df_table.Loss, df_table.count
-    print(df_table)
+    #print(df_table)
     fig = go.Figure(data=[go.Table(
         header=dict(values=list(["Wind Speed (m/s)","Active Power","Theoratical Power Cureve (kWh)","Loss Value","Loss(%)","Count"]),
                     fill_color='paleturquoise',
@@ -316,5 +318,39 @@ def table_windspeed(start_date, end_date):
         figure=fig
     )
 
+@app.callback(
+    dash.dependencies.Output('wind_direction_plot', 'children'),
+    [dash.dependencies.Input('selection_based_on_dates', 'start_date'),
+     dash.dependencies.Input('selection_based_on_dates', 'end_date')])
+def plot_wind_direction(start_date, end_date):
+    data = filter_data_based_on_dates(start_date, end_date, df)
+    df_table = wind_direction_count(data)
 
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=list(df_table.Direction),
+        y=list(df_table.Power),
+        name='Actual Power Curve',
+        marker_color='orange'
+    ))
+    fig.add_trace(go.Bar(
+        x=list(df_table.Direction),
+        y=list(df_table.Energy),
+        name='Theoratical Power Curve',
+        marker_color='blue'
+    ))
+
+    # Here we modify the tickangle of the xaxis, resulting in rotated labels.
+    fig.update_layout(
+        barmode='group',
+        xaxis_tickangle=-45,
+        title='Variation in Theoretical power and LV Active power for Particular Wind Direction',
+        xaxis_title="Direction",
+        yaxis_title = "Power"
+    )
+
+    return dcc.Graph(
+        id='wind_direction_output',
+        figure=fig
+    )
 

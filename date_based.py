@@ -10,6 +10,7 @@ import pandas as pd
 from datetime import datetime as dt
 import re
 from app_init import app
+from detailed import wind_speed_count,wind_direction_count
 
 colors = {
     'background': '#111111',
@@ -205,7 +206,9 @@ layout = html.Div(children=[
     html.Div(children=[
         # Graph 2
         html.Div(id='output_visualization_daybase'),
-        html.Div(id='output_daywise_windspeed')
+        html.Div(id='output_daywise_windspeed'),
+        html.Div(id='output_table_hours'),
+        html.Div(id='wind_direction_plot_hours')
     ]),
     html.Br(),
 ])
@@ -232,5 +235,67 @@ def update_total_daywise(date, value):
     fig = create_wind_speed_daily(data)
     return dcc.Graph(
         id='daily_windspeed_graph',
+        figure=fig
+    )
+
+@app.callback(
+    dash.dependencies.Output('output_table_hours', 'children'),
+    [dash.dependencies.Input('selection_based_on_hours', 'date'),
+     dash.dependencies.Input('time_range', 'value')])
+def table_windspeed(date, value):
+    data = filter_data_based_on_hours(date, value[0], value[1], df)
+    df_table = wind_speed_count(data)
+    #print(df_table)
+
+    fig = go.Figure(data=[go.Table(
+        header=dict(values=list(["Wind Speed (m/s)","Active Power","Theoratical Power Cureve (kWh)","Loss Value","Loss(%)","Count"]),
+                    fill_color='paleturquoise',
+                    align='center'),
+        cells=dict(values=([df_table.Speed,df_table.Power,df_table.Energy,df_table.Loss_value,df_table.Loss,df_table.Count]),
+                   fill_color='lavender',
+                   align='center'))
+    ])
+    fig.update_layout(
+        title='Wind Speed Count Data',
+        # paper_bgcolor='#AFEEEE',
+    )
+    return dcc.Graph(
+        id='table_output',
+        figure=fig
+    )
+
+@app.callback(
+    dash.dependencies.Output('wind_direction_plot_hours', 'children'),
+    [dash.dependencies.Input('selection_based_on_hours', 'date'),
+     dash.dependencies.Input('time_range', 'value')])
+def plot_wind_direction(date,value):
+    data = filter_data_based_on_hours(date, value[0], value[1], df)
+    df_table = wind_direction_count(data)
+
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=list(df_table.Direction),
+        y=list(df_table.Power),
+        name='Actual Power Curve',
+        marker_color='orange'
+    ))
+    fig.add_trace(go.Bar(
+        x=list(df_table.Direction),
+        y=list(df_table.Energy),
+        name='Theoratical Power Curve',
+        marker_color='blue'
+    ))
+
+    # Here we modify the tickangle of the xaxis, resulting in rotated labels.
+    fig.update_layout(
+        barmode='group',
+        xaxis_tickangle=-45,
+        title='Variation in Theoretical power and LV Active power for Particular Wind Direction',
+        xaxis_title="Direction",
+        yaxis_title = "Power"
+    )
+
+    return dcc.Graph(
+        id='wind_direction_output',
         figure=fig
     )
