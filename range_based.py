@@ -12,7 +12,7 @@ import re
 from app_init import app
 import plotly.graph_objects as go
 import pandas as pd
-from detailed import wind_speed_count, wind_direction_count
+from detailed import wind_speed_count, wind_direction_count, wind_direction_count_table
 
 colors = {
     'background': '#111111',
@@ -261,7 +261,10 @@ layout = html.Div(children=[
         html.Div(id='output_visualization_total'),
         html.Div(id='output_total_windspeed'),
         html.Div(id='output_table'),
-        html.Div(id='wind_direction_plot')
+        html.Div(id='output_table_wind_direction'),
+        html.Div(id='wind_direction_plot'),
+        html.Div(id='wind_direction_generation_plot')
+
     ]),
 ])
 
@@ -354,3 +357,68 @@ def plot_wind_direction(start_date, end_date):
         figure=fig
     )
 
+@app.callback(
+    dash.dependencies.Output('output_table_wind_direction', 'children'),
+    [dash.dependencies.Input('selection_based_on_dates', 'start_date'),
+     dash.dependencies.Input('selection_based_on_dates', 'end_date')])
+def table_winddirection(start_date, end_date):
+    data = filter_data_based_on_dates(start_date, end_date, df)
+    df_table = wind_direction_count_table(data)
+    print(df_table)
+    #,"Wind Speed (m/s)","Active Power","Theoratical Power Cureve (kWh)","Loss Value","Loss(%)","Count"
+    #df_table.Power, df_table.Energy, df_table.Loss_value, df_table.Loss, df_table.count
+    #print(df_table)
+
+    fig = go.Figure(data=[go.Table(
+        header=dict(values=list(["Direction","Total_Generation(MWh)","Theoretical Power Curve Total Generation (MWh)","WindSpeed(m/s)",
+                                     "Total_Loss(MWh)","Loss(%)"]),
+                    fill_color='paleturquoise',
+                    align='center'),
+        cells=dict(values=([df_table.Direction,df_table.Total_Generation,df_table.Energy_MW,df_table.Speed, df_table.Loss_value,df_table.Loss]),
+                   fill_color='lavender',
+                   align='center'))
+    ])
+    fig.update_layout(
+        title='Wind Direction Count Data',
+        # paper_bgcolor='#AFEEEE',
+    )
+    return dcc.Graph(
+        id='table_wind_direction',
+        figure=fig
+    )
+
+@app.callback(
+    dash.dependencies.Output('wind_direction_generation_plot', 'children'),
+    [dash.dependencies.Input('selection_based_on_dates', 'start_date'),
+     dash.dependencies.Input('selection_based_on_dates', 'end_date')])
+def plot_wind_direction(start_date, end_date):
+    data = filter_data_based_on_dates(start_date, end_date, df)
+    df_table = wind_direction_count_table(data)
+
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=list(df_table.Direction),
+        y=list(df_table.Total_Generation),
+        name='Actual Power Curve',
+        marker_color='orange'
+    ))
+    fig.add_trace(go.Bar(
+        x=list(df_table.Direction),
+        y=list(df_table.Energy_MW),
+        name='Theoratical Power Curve',
+        marker_color='blue'
+    ))
+
+    # Here we modify the tickangle of the xaxis, resulting in rotated labels.
+    fig.update_layout(
+        barmode='group',
+        xaxis_tickangle=-45,
+        title='Total Energy Generation Value vs Direction',
+        xaxis_title="Wind Direction",
+        yaxis_title = "Energy Generation"
+    )
+
+    return dcc.Graph(
+        id='wind_direction_output',
+        figure=fig
+    )

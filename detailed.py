@@ -224,6 +224,29 @@ def wind_direction_count(df):
                         inplace=True)
     return data_T_direction
 
+def wind_direction_count_table(df):
+    data_T_direction = wind_direction_count(df)
+    # creating summary direction total dataframe from direction data.
+    data_T_direction_total = data_T_direction.copy()
+    # removing the unnecessary columns.
+    data_T_direction_total.drop(
+        columns={"Count", "Power", "Energy", "Loss_value", "Loss"},
+        inplace=True)
+    # calculating the total values from direction data.
+    data_T_direction_total["Total_Generation"] = data_T_direction["Power"] * data_T_direction["Count"] / 6000
+    data_T_direction_total["Energy_MW"] = data_T_direction["Energy"] * data_T_direction["Count"] / 6000
+    data_T_direction_total["Loss_value"] = data_T_direction_total["Energy_MW"] - data_T_direction_total["Total_Generation"]
+    data_T_direction_total["Loss"] = data_T_direction_total["Loss_value"] / data_T_direction_total["Energy_MW"] * 100
+    # rounding the values to 2 digit
+    data_T_direction_total = data_T_direction_total.round(
+        {'Speed': 1, 'Total_Generation': 2, 'Energy_MW': 2,
+         'Loss_value': 2, 'Loss': 2})
+    # changing the place of columns.
+    data_T_direction_total = data_T_direction_total[
+        ["Direction", "Total_Generation", "Energy_MW", "Speed",
+         "Loss_value", "Loss"]]
+    return data_T_direction_total
+
 
 #url = "C:/Users/Lenovo/Desktop/Windmill Power Forecast/03 Building Models - TimeSeries/T1.csv"
 #df = pd.read_csv(url)
