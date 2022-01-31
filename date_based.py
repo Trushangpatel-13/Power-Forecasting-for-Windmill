@@ -210,7 +210,8 @@ layout = html.Div(children=[
         html.Div(id='output_table_hours'),
         html.Div(id='output_table_wind_direction_hours'),
         html.Div(id='wind_direction_plot_hours'),
-        html.Div(id='wind_direction_generation_plot_hours')
+        html.Div(id='wind_direction_generation_plot_hours'),
+        html.Div(id='wind_direction_total_loss_hours')
 
     ]),
     html.Br(),
@@ -362,6 +363,35 @@ def plot_wind_direction(date,value):
         title='Total Energy Generation Value vs Direction',
         xaxis_title="Wind Direction",
         yaxis_title = "Energy Generation"
+    )
+
+    return dcc.Graph(
+        id='wind_direction_output',
+        figure=fig
+    )
+
+@app.callback(
+    dash.dependencies.Output('wind_direction_total_loss_hours', 'children'),
+    [dash.dependencies.Input('selection_based_on_hours', 'date'),
+     dash.dependencies.Input('time_range', 'value')])
+def plot_wind_direction(date,value):
+    data = data = filter_data_based_on_hours(date, value[0], value[1], df)
+    df_table = wind_direction_count_table(data)
+
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=list(df_table.Direction),
+        y=list(df_table.Loss_value),
+        name='Total Loss',
+        marker_color='red'
+    ))
+
+    # Here we modify the tickangle of the xaxis, resulting in rotated labels.
+    fig.update_layout(
+        barmode='group',
+        title='Total Loss Value vs Direction',
+        xaxis_title="Wind Direction",
+        yaxis_title = "Total Loss"
     )
 
     return dcc.Graph(

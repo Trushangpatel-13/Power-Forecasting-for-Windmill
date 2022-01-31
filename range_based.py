@@ -3,16 +3,14 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
-import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import numpy as np
-import pandas as pd
 from datetime import datetime as dt
 import re
 from app_init import app
 import plotly.graph_objects as go
 import pandas as pd
 from detailed import wind_speed_count, wind_direction_count, wind_direction_count_table
+import plotly.express as px
 
 colors = {
     'background': '#111111',
@@ -263,7 +261,8 @@ layout = html.Div(children=[
         html.Div(id='output_table'),
         html.Div(id='output_table_wind_direction'),
         html.Div(id='wind_direction_plot'),
-        html.Div(id='wind_direction_generation_plot')
+        html.Div(id='wind_direction_generation_plot'),
+        html.Div(id='wind_direction_total_loss')
 
     ]),
 ])
@@ -418,6 +417,75 @@ def plot_wind_direction(start_date, end_date):
         yaxis_title = "Energy Generation"
     )
 
+    return dcc.Graph(
+        id='wind_direction_output',
+        figure=fig
+    )
+
+@app.callback(
+    dash.dependencies.Output('wind_direction_total_loss', 'children'),
+    [dash.dependencies.Input('selection_based_on_dates', 'start_date'),
+     dash.dependencies.Input('selection_based_on_dates', 'end_date')])
+def plot_wind_direction(start_date, end_date):
+    data = filter_data_based_on_dates(start_date, end_date, df)
+    df_table = wind_direction_count_table(data)
+
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=list(df_table.Direction),
+        y=list(df_table.Loss_value),
+        name='Total Loss',
+        marker_color='red'
+    ))
+
+    # Here we modify the tickangle of the xaxis, resulting in rotated labels.
+    fig.update_layout(
+        barmode='group',
+        title='Total Loss Value vs Direction',
+        xaxis_title="Wind Direction",
+        yaxis_title = "Total Loss"
+    )
+
+    return dcc.Graph(
+        id='wind_direction_output',
+        figure=fig
+    )
+
+@app.callback(
+    dash.dependencies.Output('power_curve', 'children'),
+    [dash.dependencies.Input('selection_based_on_dates', 'start_date'),
+     dash.dependencies.Input('selection_based_on_dates', 'end_date')])
+def plot_wind_direction(start_date, end_date):
+    data = filter_data_based_on_dates(start_date, end_date, df)
+    df_table = wind_direction_count(data)
+    print(df_table)
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=df_table['Speed'],
+        y=df_table['Energy'],
+        mode='markers+lines',
+        name='Theoretical_Power_Curve (KWh)',
+        marker=dict(symbol="circle", color="blue")))
+
+    fig.add_trace(go.Scatter(
+        x=df_table['Speed'],
+        y=df_table['Power'],
+        mode='markers+lines',
+        name='LV ActivePower (kW)',
+        opacity=0.7,
+        marker=dict(symbol="circle", color="orange")))
+
+    fig.update_layout(
+        # plot_bgcolor=colors['background'],
+        paper_bgcolor='#AFEEEE',
+        font_color=colors['background'],
+        title='Power Curve',
+        # font=dict(
+        #     family="Courier New, monospace",
+        #     size=13,
+        #     color=colors['background']
+        # ),
+    )
     return dcc.Graph(
         id='wind_direction_output',
         figure=fig
